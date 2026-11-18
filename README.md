@@ -2,6 +2,12 @@
 
 **Assignment:** Building a Decision-Making Resolution Agent (Agentic AI: Build an Agent That Uses Tools)
 
+## Why I built this
+
+I built this as an assignment for Xebia's Forward Deployed Engineer (FDE) Launchpad programme. The goal was to learn how AI agents go beyond chatting and take real actions: reading data, making a decision, and carrying it out safely with guardrails.
+
+## What it does
+
 An autonomous, tool-using agent that resolves a customer's damaged-item complaint. It reads the order record and checks warehouse inventory. If the item can be exchanged, it confirms the exchange. If the replacement is out of stock or the order is ineligible, it initiates a refund. It then sends a confirmation notification and summarises the resolution for the customer.
 
 ## Run
