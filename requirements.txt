@@ -1,0 +1,2 @@
+anthropic>=0.40  # only needed for: python run_demo.py --claude
+pytest

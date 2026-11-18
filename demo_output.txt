@@ -1,0 +1,80 @@
+Model back-end: PolicyModel
+
+==============================================================================
+SCENARIO: Exchange: damaged item, replacement in stock
+CUSTOMER: Hi, my headphones from order ORD-1001 arrived with a cracked headband. Can you help?
+
+  [1] model: The customer reports an issue with ORD-1001. Looking up the order first.
+  [1] tool  : lookup_order({"order_id": "ORD-1001"})
+           -> {"status": "success", "order": {"order_id": "ORD-1001", "customer_name": "Aisha Khan", "customer_email": "aisha.khan@example.com", "item_id": "SKU-HEADPHONES-01", "item_name": "Wireless Noise-Cancelling Headphones", "amount_paid": 7999.0, "currency": "INR", "payment_method": "Visa card ending 4417", "order_status": "delivered", "exchange_eligible": true}}
+  [2] model: Order found (Wireless Noise-Cancelling Headphones). Checking whether a replacement is in stock.
+  [2] tool  : check_inventory({"item_id": "SKU-HEADPHONES-01"})
+           -> {"status": "success", "item_id": "SKU-HEADPHONES-01", "warehouse": "Gurugram FC-2", "units_available": 14, "in_stock": true}
+  [3] model: Sending the confirmation email.
+  [3] tool  : send_notification({"customer_email": "aisha.khan@example.com", "message": "Hi Aisha, your exchange for order ORD-1001 (Wireless Noise-Cancelling Headphones) is confirmed. A replacement unit will be shipped to you."})
+           -> {"status": "success", "notification_id": "NTF-20DAA60F", "delivered_to": "aisha.khan@example.com"}
+  [4] model: Hi Aisha, I'm sorry your Wireless Noise-Cancelling Headphones arrived damaged. A replacement is in stock, so I've confirmed an exchange for order ORD-1001. A confirmation has been sent to aisha.khan@example.com.
+
+AGENT REPLY (4 iterations, escalated=False):
+  Hi Aisha, I'm sorry your Wireless Noise-Cancelling Headphones arrived damaged. A replacement is in stock, so I've confirmed an exchange for order ORD-1001. A confirmation has been sent to aisha.khan@example.com.
+
+EMAIL SENT to aisha.khan@example.com: Hi Aisha, your exchange for order ORD-1001 (Wireless Noise-Cancelling Headphones) is confirmed. A replacement unit will be shipped to you.
+
+==============================================================================
+SCENARIO: Refund: damaged item, replacement out of stock
+CUSTOMER: The kettle I got in order ORD-1002 has a broken glass jug. Please sort this out.
+
+  [1] model: The customer reports an issue with ORD-1002. Looking up the order first.
+  [1] tool  : lookup_order({"order_id": "ORD-1002"})
+           -> {"status": "success", "order": {"order_id": "ORD-1002", "customer_name": "Rahul Mehta", "customer_email": "rahul.mehta@example.com", "item_id": "SKU-KETTLE-02", "item_name": "Electric Glass Kettle 1.7L", "amount_paid": 2499.0, "currency": "INR", "payment_method": "UPI", "order_status": "delivered", "exchange_eligible": true}}
+  [2] model: Order found (Electric Glass Kettle 1.7L). Checking whether a replacement is in stock.
+  [2] tool  : check_inventory({"item_id": "SKU-KETTLE-02"})
+           -> {"status": "success", "item_id": "SKU-KETTLE-02", "warehouse": "Gurugram FC-2", "units_available": 0, "in_stock": false}
+  [3] model: Cannot exchange because the replacement is out of stock. Initiating a refund.
+  [3] tool  : process_refund({"order_id": "ORD-1002", "reason": "Damaged item; the replacement is out of stock"})
+           -> {"status": "success", "refund_reference": "RFD-893B33DD", "order_id": "ORD-1002", "amount_refunded": 2499.0, "currency": "INR", "refunded_to": "UPI", "reason": "Damaged item; the replacement is out of stock"}
+  [4] model: Sending the confirmation email.
+  [4] tool  : send_notification({"customer_email": "rahul.mehta@example.com", "message": "Hi Rahul, we've refunded INR 2,499.00 for order ORD-1002 to your UPI. Refund reference: RFD-893B33DD."})
+           -> {"status": "success", "notification_id": "NTF-52246F26", "delivered_to": "rahul.mehta@example.com"}
+  [5] model: Hi Rahul, I'm sorry your Electric Glass Kettle 1.7L arrived damaged. I couldn't arrange an exchange because the replacement is out of stock, so I've refunded INR 2,499.00 to your UPI (reference RFD-893B33DD). A confirmation has been sent to rahul.mehta@example.com.
+
+AGENT REPLY (5 iterations, escalated=False):
+  Hi Rahul, I'm sorry your Electric Glass Kettle 1.7L arrived damaged. I couldn't arrange an exchange because the replacement is out of stock, so I've refunded INR 2,499.00 to your UPI (reference RFD-893B33DD). A confirmation has been sent to rahul.mehta@example.com.
+
+EMAIL SENT to rahul.mehta@example.com: Hi Rahul, we've refunded INR 2,499.00 for order ORD-1002 to your UPI. Refund reference: RFD-893B33DD.
+
+==============================================================================
+SCENARIO: Refund: order outside the exchange window
+CUSTOMER: My smartwatch from ORD-1003 stopped charging and the strap is torn.
+
+  [1] model: The customer reports an issue with ORD-1003. Looking up the order first.
+  [1] tool  : lookup_order({"order_id": "ORD-1003"})
+           -> {"status": "success", "order": {"order_id": "ORD-1003", "customer_name": "Priya Nair", "customer_email": "priya.nair@example.com", "item_id": "SKU-WATCH-03", "item_name": "Fitness Smartwatch", "amount_paid": 4999.0, "currency": "INR", "payment_method": "Mastercard ending 9021", "order_status": "delivered", "exchange_eligible": false}}
+  [2] model: Order found (Fitness Smartwatch). Checking whether a replacement is in stock.
+  [2] tool  : check_inventory({"item_id": "SKU-WATCH-03"})
+           -> {"status": "success", "item_id": "SKU-WATCH-03", "warehouse": "Bhiwandi FC-1", "units_available": 22, "in_stock": true}
+  [3] model: Cannot exchange because the order is not eligible for exchange. Initiating a refund.
+  [3] tool  : process_refund({"order_id": "ORD-1003", "reason": "Damaged item; the order is not eligible for exchange"})
+           -> {"status": "success", "refund_reference": "RFD-0A253A8B", "order_id": "ORD-1003", "amount_refunded": 4999.0, "currency": "INR", "refunded_to": "Mastercard ending 9021", "reason": "Damaged item; the order is not eligible for exchange"}
+  [4] model: Sending the confirmation email.
+  [4] tool  : send_notification({"customer_email": "priya.nair@example.com", "message": "Hi Priya, we've refunded INR 4,999.00 for order ORD-1003 to your Mastercard ending 9021. Refund reference: RFD-0A253A8B."})
+           -> {"status": "success", "notification_id": "NTF-4A49E73B", "delivered_to": "priya.nair@example.com"}
+  [5] model: Hi Priya, I'm sorry your Fitness Smartwatch arrived damaged. I couldn't arrange an exchange because your order isn't eligible for exchange, so I've refunded INR 4,999.00 to your Mastercard ending 9021 (reference RFD-0A253A8B). A confirmation has been sent to priya.nair@example.com.
+
+AGENT REPLY (5 iterations, escalated=False):
+  Hi Priya, I'm sorry your Fitness Smartwatch arrived damaged. I couldn't arrange an exchange because your order isn't eligible for exchange, so I've refunded INR 4,999.00 to your Mastercard ending 9021 (reference RFD-0A253A8B). A confirmation has been sent to priya.nair@example.com.
+
+EMAIL SENT to priya.nair@example.com: Hi Priya, we've refunded INR 4,999.00 for order ORD-1003 to your Mastercard ending 9021. Refund reference: RFD-0A253A8B.
+
+==============================================================================
+SCENARIO: Resilience: invalid order ID
+CUSTOMER: My order ORD-9999 arrived damaged, what can you do?
+
+  [1] model: The customer reports an issue with ORD-9999. Looking up the order first.
+  [1] tool  : lookup_order({"order_id": "ORD-9999"})
+           -> {"status": "error", "error_code": "ORDER_NOT_FOUND", "message": "No order with ID 'ORD-9999' exists. Ask the customer to verify the order ID."}
+  [2] model: I'm sorry, but I couldn't find an order with the ID ORD-9999. Could you please verify the order ID from your confirmation email and send it again?
+
+AGENT REPLY (2 iterations, escalated=False):
+  I'm sorry, but I couldn't find an order with the ID ORD-9999. Could you please verify the order ID from your confirmation email and send it again?
+
